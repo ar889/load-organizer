@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Load Organizer</title>
+    <style>
+        body {
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+            margin: 20px;
+            background: #f7fafc;
+            color: #0f172a
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 16px;
+            color: #0ea5a4;
+            font-weight: 700
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 45px;
+            align-items: flex-start
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            resize: vertical
+        }
+
+        .controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 0;
+            background: #0ea5a4;
+            color: white;
+            cursor: pointer
+        }
+
+        button.secondary {
+            background: #64748b
+        }
+
+        .output {
+            height: 400px;
+            overflow: auto
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 6px rgba(2, 6, 23, 0.08);
+            height: 100%
+        }
+
+        pre {
+            white-space: pre-wrap;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            margin: 0;
+            height: 100%
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚛 Powered by ARehman</h1>
+    <div class="container">
+        <div>
+            <textarea id="input" placeholder="Paste raw load here..."></textarea>
+            <div class="controls">
+                <button id="formatBtn">Format</button>
+                <button id="clearBtn" class="secondary">Clear</button>
+                <button id="copyBtn" class="secondary">Copy Output</button>
+            </div>
+        </div>
+        <div class="output" id="output">
+            <div class="card">
+                <pre>Formatted result will appear here...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function extractCityStateMatches(lines) {
+            const matches = [];
+            const joined = lines.join(' ');
+            const regex = /([A-Za-z .'-]+),\s*([A-Za-z]{2})/g;
+            let m;
+            while ((m = regex.exec(joined)) !== null) {
+                matches.push(m[1].trim() + ',' + m[2].toUpperCase());
+            }
+            return matches;
+        }
+
+        function parseChunk(chunk) {
+            const rawLines = chunk.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
+            const out = { price: '', mile: '', dh: '', PU: '', Del: '', COM: '', weight: '', lengthType: '', brokerName: '', brokerContact: '', brokerMC: '' };
+
+            // Price or dash
+            const priceLine = rawLines.find(l => /^\$[\d,]+/.test(l) || l.trim() === '-');
+            out.price = priceLine ? priceLine : '-';
+
+            // Mile
+            const mileLine = rawLines.find(l => /^\d{2,}$/.test(l.replace(/,/g, '')));
+            if (mileLine) out.mile = mileLine.replace(/,/g, '');
+
+            // dh
+            const dhLine = rawLines.find(l => /\(\d+\)/.test(l));
+            if (dhLine) {
+                const m = dhLine.match(/\((\d+)\)/);
+                if (m) out.dh = '(' + m[1] + ')';
+            }
+
+            // Cities
+            const cs = extractCityStateMatches(rawLines);
+            if (cs.length >= 2) { out.PU = cs[0]; out.Del = cs[1]; }
+
+            // weight
+            const w = rawLines.find(l => /\d+[\d,]*\s*lbs/i.test(l));
+            if (w) out.weight = 'weight= ' + w.match(/\d+[\d,]*/i)[0] + ' lbs';
+
+            // length
+            const lt = rawLines.find(l => /ft\s*-\s*/i.test(l));
+            if (lt) out.lengthType = lt;
+
+            // broker contact (email or phone)
+            const contactLine = rawLines.find(l => /@/.test(l) || /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(l));
+            if (contactLine) out.brokerContact = contactLine;
+
+            return out;
+        }
+
+        function formatOutput(parsed) {
+            const lines = [];
+            lines.push(parsed.price || '-');
+            if (parsed.mile) lines.push('Mile=' + parsed.mile);
+            if (parsed.dh) lines.push('dh=' + parsed.dh);
+            if (parsed.PU) lines.push('PU=' + parsed.PU + '--');
+            if (parsed.Del) lines.push('Del=' + parsed.Del + '--');
+            lines.push('');
+            lines.push('');
+            lines.push('COM=');
+            if (parsed.weight) lines.push(parsed.weight);
+            if (parsed.lengthType) lines.push(parsed.lengthType);
+            lines.push('');
+            lines.push('Broker Name:'); // always empty for manual entry
+            lines.push('Broker Contact: ' + (parsed.brokerContact || ''));
+            lines.push('Broker MC:');
+            return lines.join('\n');
+        }
+
+        function generateFormatted() {
+            const txt = document.getElementById('input').value;
+            const parsed = parseChunk(txt);
+            return formatOutput(parsed);
+        }
+
+        document.getElementById('formatBtn').addEventListener('click', () => {
+            const formatted = generateFormatted();
+            document.getElementById('output').innerHTML = '<div class="card"><pre>' + formatted + '</pre></div>';
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            document.getElementById('input').value = '';
+            document.getElementById('output').innerHTML = '<div class="card"><pre>Formatted result will appear here...</pre></div>';
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const formatted = generateFormatted();
+            navigator.clipboard.writeText(formatted).then(() => { alert('Copied to clipboard!'); });
+        });
+    </script>
+</body>
+
+</html>
