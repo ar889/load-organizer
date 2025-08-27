@@ -149,13 +149,13 @@
         function formatOutput(parsed) {
             const lines = [];
             lines.push(parsed.price || '-');
-            if (parsed.mile) lines.push('Mile=' + parsed.mile);
-            if (parsed.dh) lines.push('dh=' + parsed.dh);
+            if (parsed.mile) lines.push('Miles=' + parsed.mile);
+            if (parsed.dh) lines.push('DH=' + parsed.dh);
             if (parsed.PU) lines.push('PU=' + parsed.PU + '--');
             if (parsed.Del) lines.push('Del=' + parsed.Del + '--');
             lines.push('');
             lines.push('');
-            lines.push('COM=');
+            lines.push('com=');
             if (parsed.weight) lines.push(parsed.weight);
             if (parsed.lengthType) lines.push(parsed.lengthType);
             lines.push('');
@@ -187,5 +187,6 @@
         });
     </script>
 </body>
+
 
 </html>
