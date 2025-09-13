@@ -1,54 +1,43 @@
-# ARehman's Dispatcher Tool
+# Load Formatter Tool
 
-## 📌 Overview
-A simple web-based tool to help truck dispatchers quickly **parse and organize raw load board text** into a clean, structured format.  
-Built with **HTML, CSS, and JavaScript**, it runs entirely in the browser with no setup required.
+A web-based tool to **format, calculate, and manage truck loads** for
+dispatchers.
 
 ## 🚀 Features
-- Paste raw load text directly from load boards (e.g., DAT).
-- Automatically extracts key details:  
-  - Price (or `-` if missing)  
-  - Miles  
-  - Deadhead (dh)  
-  - Pickup (PU) & Delivery (Del) locations  
-  - Weight (shown as `weight= ...`)  
-  - Length & Type (e.g., `17 ft - Partial`)  
-  - Broker Contact (email or phone, if available)  
-- Generates a dispatcher-friendly formatted load instantly.
-- **Copy Output** button copies the organized load, even without clicking format.
-- **Side-by-side view**: raw load on the left, formatted output on the right.
 
-## 🛠️ Tech Stack
-- **HTML** — structure  
-- **CSS** — styling & layout (grid for side-by-side view)  
-- **JavaScript** — parsing, extracting, and formatting logic
+-   Paste raw load data from load boards → instantly formats into a
+    clean, readable structure.
+-   Automatically extracts:
+    -   Price, Miles, Deadhead, Pickup & Delivery locations, Pickup
+        Date.
+    -   Broker Name & Contact (email or phone).
+-   Calculates RPM:
+    -   From load (if available) or shows `-` if not provided.
+    -   Custom RPM input → instantly calculates total cost.
+    -   Broker price input → instantly calculates broker's RPM.
+    -   Toggle deadhead inclusion with a checkbox.
+-   Editable Output → make manual adjustments before copying or saving.
+-   Save unlimited loads in **localStorage** with Copy & Delete options.
+-   Clear All button to wipe saved loads at once.
+-   Compact, responsive layout with modern **flexbox/grid** design.
+-   Pastel-colored saved load cards with smooth transitions & hover
+    effects.
+-   Hidden **"Powered by ARehman"** text works as a clear button (secret
+    shortcut 😉).
 
-## 📖 Usage
-1. Open the tool in your browser.  
-2. Paste a raw load text into the left textarea.  
-3. Click **Format** (or directly **Copy Output**) to get the structured version.  
-4. The organized load appears on the right panel, ready to copy or use.
+## 🎨 UI Enhancements
 
-## 📌 Example Output
-```
-$1,111
-Mile=1143
-dh=(144)
-PU=Augusta,GA--
-Del=Cheney,KS--
+-   Gradient background for the page.
+-   Animated buttons and cards with hover/scale effects.
+-   Clean and compact info bar showing RPM & calculations inline.
 
-COM=
-weight= 3000 lbs
-17 ft - Partial
+## 📦 Usage
 
-Broker Name:
-Broker Contact: jgartner@warnert.com
-Broker MC:
-```
+1.  Open `index.html` in any modern browser.
+2.  Paste a load into the left input box.
+3.  Instantly see formatted output on the right.
+4.  Save, Copy, or Clear loads as needed.
 
-## 🤝 Contribution
-Contributions, issues, and feature requests are welcome!  
-Feel free to fork the repo and submit pull requests.
+------------------------------------------------------------------------
 
-## 📄 License
-This project is open source and available under the **MIT License**.
+🚛 **Powered by ARehman** -- Smart Dispatcher's Load Formatter
