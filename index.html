@@ -9,38 +9,78 @@
         body {
             font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
             margin: 20px;
-            background: #f7fafc;
-            color: #0f172a
+            background: linear-gradient(135deg, #e0f7fa, #ffffff);
+            color: #0f172a;
+            transition: background 0.5s ease;
         }
 
         h1 {
+            display: inline;
             font-size: 22px;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             color: #0ea5a4;
-            font-weight: 700
+            font-weight: 700;
+            transition: color 0.3s ease;
+        }
+
+        h1 span {
+            cursor: pointer;
+        }
+
+        h1 span:hover {
+            color: #028090;
+        }
+
+        .info-bar {
+            font-size: 14px;
+            background: #e0f2f1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .info-bar:hover {
+            background: #b2dfdb;
         }
 
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 45px;
-            align-items: flex-start
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
 
-        textarea {
+        textarea,
+        .editable-output {
             width: 100%;
             height: 400px;
             padding: 10px;
             border-radius: 8px;
             border: 1px solid #cbd5e1;
             background: #fff;
-            resize: vertical
+            resize: vertical;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            white-space: pre-wrap;
+            transition: box-shadow 0.3s ease;
+        }
+
+        textarea:focus,
+        .editable-output:focus {
+            outline: none;
+            box-shadow: 0 0 8px #0ea5a4;
         }
 
         .controls {
             margin-top: 8px;
             display: flex;
-            gap: 8px
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         button {
@@ -49,37 +89,108 @@
             border: 0;
             background: #0ea5a4;
             color: white;
-            cursor: pointer
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: #028090;
         }
 
         button.secondary {
-            background: #64748b
+            background: #64748b;
+        }
+
+        button.secondary:hover {
+            background: #475569;
         }
 
         .output {
-            height: 400px;
-            overflow: auto
+            height: auto;
+            overflow: visible;
         }
 
         .card {
             background: #fff;
             border-radius: 10px;
-            padding: 12px;
+            padding: 0;
             box-shadow: 0 2px 6px rgba(2, 6, 23, 0.08);
-            height: 100%
+            height: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        pre {
-            white-space: pre-wrap;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-            margin: 0;
-            height: 100%
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .info-input {
+            width: 60px;
+            padding: 2px 6px;
+            font-size: 14px;
+            border: 1px solid #94a3b8;
+            border-radius: 4px;
+        }
+
+        #savedLoads {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .saved-card {
+            border-radius: 8px;
+            padding: 10px;
+            width: 300px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .saved-card:nth-child(4n+1) {
+            background: #f1f8ff;
+        }
+
+        .saved-card:nth-child(4n+2) {
+            background: #f9fbe7;
+        }
+
+        .saved-card:nth-child(4n+3) {
+            background: #f1f8e9;
+        }
+
+        .saved-card:nth-child(4n+4) {
+            background: #fff3e0;
+        }
+
+        .saved-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .saved-actions {
+            margin-top: 6px;
+            display: flex;
+            gap: 8px;
         }
     </style>
 </head>
 
 <body>
-    <h1>🚛 Powered by ARehman</h1>
+    <h1><span id="hiddenClear">🚛 Powered by ARehman</span></h1>
+    <div class="info-bar">
+        <label><input type="checkbox" id="includeDh"> Include Deadhead</label>
+        <span id="rpmInfo">RPM: -</span>
+        <span id="calc15">@1.5: -</span>
+        <span id="calc16">@1.6: -</span>
+        <span>Custom <input id="customRpm" class="info-input" type="number" step="0.01" placeholder="1.8"> → <span id="customCalc">-</span></span>
+        <span>Broker $ <input id="brokerPrice" class="info-input" type="number" step="1" placeholder="1000"> → <span id="brokerRpm">-</span></span>
+    </div>
+
     <div class="container">
         <div>
             <textarea id="input" placeholder="Paste raw load here..."></textarea>
@@ -91,57 +202,40 @@
         </div>
         <div class="output" id="output">
             <div class="card">
-                <pre>Formatted result will appear here...</pre>
+                <textarea id="editableOutput" class="editable-output" placeholder="Formatted result will appear here..."></textarea>
+            </div>
+            <div class="controls">
+                <button id="saveBtn">Save Output</button>
+                <button id="clearAllBtn" class="secondary">Clear All Saved</button>
             </div>
         </div>
     </div>
 
+    <div id="savedLoads"></div>
+
     <script>
-        function extractCityStateMatches(lines) {
-            const matches = [];
-            const joined = lines.join(' ');
-            const regex = /([A-Za-z .'-]+),\s*([A-Za-z]{2})/g;
-            let m;
-            while ((m = regex.exec(joined)) !== null) {
-                matches.push(m[1].trim() + ',' + m[2].toUpperCase());
-            }
-            return matches;
-        }
-
         function parseChunk(chunk) {
-            const rawLines = chunk.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
-            const out = { price: '', mile: '', dh: '', PU: '', Del: '', COM: '', weight: '', lengthType: '', brokerName: '', brokerContact: '', brokerMC: '' };
+            let rawLines = chunk.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
 
-            // Price or dash
-            const priceLine = rawLines.find(l => /^\$[\d,]+/.test(l) || l.trim() === '-');
-            out.price = priceLine ? priceLine : '-';
+            // Detect RPM line ($X.XX*/mi)
+            let rpmLine = rawLines.find(l => /^\$[\d,.]+.*\/mi/i.test(l));
+            let rpm = rpmLine ? rpmLine.match(/\$([\d,.]+)/)[1] : '-';
 
-            // Mile
-            const mileLine = rawLines.find(l => /^\d{2,}$/.test(l.replace(/,/g, '')));
-            if (mileLine) out.mile = mileLine.replace(/,/g, '');
+            // Remove RPM line if exists
+            rawLines = rawLines.filter(l => !/^\$[\d,.]+.*\/mi/i.test(l));
 
-            // dh
-            const dhLine = rawLines.find(l => /\(\d+\)/.test(l));
-            if (dhLine) {
-                const m = dhLine.match(/\((\d+)\)/);
-                if (m) out.dh = '(' + m[1] + ')';
-            }
+            const out = { price: '', mile: '', dh: '', PU: '', Del: '', puDate: '', weight: '', lengthType: '', brokerName: '', brokerContact: '', rpm: rpm };
 
-            // Cities
-            const cs = extractCityStateMatches(rawLines);
-            if (cs.length >= 2) { out.PU = cs[0]; out.Del = cs[1]; }
-
-            // weight
-            const w = rawLines.find(l => /\d+[\d,]*\s*lbs/i.test(l));
-            if (w) out.weight = 'weight= ' + w.match(/\d+[\d,]*/i)[0] + ' lbs';
-
-            // length
-            const lt = rawLines.find(l => /ft\s*-\s*/i.test(l));
-            if (lt) out.lengthType = lt;
-
-            // broker contact (email or phone)
-            const contactLine = rawLines.find(l => /@/.test(l) || /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(l));
-            if (contactLine) out.brokerContact = contactLine;
+            out.price = rawLines[0] || '-';
+            out.mile = rawLines[1] || '';
+            out.PU = (rawLines[2] && rawLines[4]) ? rawLines[2] + ',' + rawLines[4] : '';
+            out.Del = (rawLines[5] && rawLines[7]) ? rawLines[5] + ',' + rawLines[7] : '';
+            out.dh = rawLines[8] || '';
+            out.puDate = rawLines[9] || '';
+            out.weight = rawLines[11] ? 'weight= ' + rawLines[11].replace(/[^0-9]/g, '') + ' lbs' : '';
+            out.lengthType = rawLines[12] || '';
+            out.brokerName = rawLines[13] || '';
+            out.brokerContact = rawLines[14] || '';
 
             return out;
         }
@@ -149,44 +243,126 @@
         function formatOutput(parsed) {
             const lines = [];
             lines.push(parsed.price || '-');
-            if (parsed.mile) lines.push('Miles=' + parsed.mile);
-            if (parsed.dh) lines.push('DH=' + parsed.dh);
-            if (parsed.PU) lines.push('PU=' + parsed.PU + '--');
-            if (parsed.Del) lines.push('Del=' + parsed.Del + '--');
+            if (parsed.mile) lines.push('Mile=' + parsed.mile);
+            if (parsed.dh) lines.push('dh=' + parsed.dh);
+            if (parsed.PU) lines.push('From=' + parsed.PU);
+            if (parsed.Del) lines.push('To=' + parsed.Del);
+            if (parsed.puDate) lines.push('Pu=' + parsed.puDate + '--');
+            lines.push('Del=');
             lines.push('');
             lines.push('');
-            lines.push('com=');
+            lines.push('COM=');
             if (parsed.weight) lines.push(parsed.weight);
             if (parsed.lengthType) lines.push(parsed.lengthType);
             lines.push('');
-            lines.push('Broker Name:'); // always empty for manual entry
+            lines.push('Broker Name: ' + (parsed.brokerName || ''));
             lines.push('Broker Contact: ' + (parsed.brokerContact || ''));
             lines.push('Broker MC:');
             return lines.join('\n');
         }
 
+        function updateInfoBar(parsed) {
+            let mile = parseInt(parsed.mile) || 0;
+            let dh = parseInt(parsed.dh.replace(/[^0-9]/g, '')) || 0;
+            let includeDh = document.getElementById('includeDh').checked;
+            let totalMiles = includeDh ? (mile + dh) : mile;
+
+            document.getElementById('rpmInfo').innerText = 'RPM: ' + (parsed.rpm !== '-' ? '$' + parsed.rpm : '-');
+            document.getElementById('calc15').innerText = '@1.5: $' + (totalMiles * 1.5).toFixed(2);
+            document.getElementById('calc16').innerText = '@1.6: $' + (totalMiles * 1.6).toFixed(2);
+
+            document.getElementById('customRpm').addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                document.getElementById('customCalc').innerText = val ? '$' + (totalMiles * val).toFixed(2) : '-';
+            });
+
+            document.getElementById('brokerPrice').addEventListener('input', (e) => {
+                let price = parseFloat(e.target.value);
+                document.getElementById('brokerRpm').innerText = (price && totalMiles) ? '$' + (price / totalMiles).toFixed(2) : '-';
+            });
+        }
+
         function generateFormatted() {
             const txt = document.getElementById('input').value;
             const parsed = parseChunk(txt);
+            updateInfoBar(parsed);
             return formatOutput(parsed);
         }
 
-        document.getElementById('formatBtn').addEventListener('click', () => {
+        function updateOutput() {
             const formatted = generateFormatted();
-            document.getElementById('output').innerHTML = '<div class="card"><pre>' + formatted + '</pre></div>';
-        });
+            document.getElementById('editableOutput').value = formatted;
+        }
 
-        document.getElementById('clearBtn').addEventListener('click', () => {
+        // Saved loads management
+        function renderSavedLoads() {
+            const saved = JSON.parse(localStorage.getItem('savedLoads') || '[]');
+            const container = document.getElementById('savedLoads');
+            container.innerHTML = '';
+            saved.forEach((text, index) => {
+                const card = document.createElement('div');
+                card.className = 'saved-card';
+                card.innerHTML = `<pre>${text}</pre>`;
+                const actions = document.createElement('div');
+                actions.className = 'saved-actions';
+                const copyBtn = document.createElement('button');
+                copyBtn.textContent = 'Copy';
+                copyBtn.onclick = () => navigator.clipboard.writeText(text);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'secondary';
+                deleteBtn.onclick = () => {
+                    const updated = saved.filter((_, i) => i !== index);
+                    localStorage.setItem('savedLoads', JSON.stringify(updated));
+                    renderSavedLoads();
+                };
+                actions.appendChild(copyBtn);
+                actions.appendChild(deleteBtn);
+                card.appendChild(actions);
+                container.appendChild(card);
+            });
+        }
+
+        function clearAllFields() {
             document.getElementById('input').value = '';
-            document.getElementById('output').innerHTML = '<div class="card"><pre>Formatted result will appear here...</pre></div>';
+            document.getElementById('editableOutput').value = '';
+            document.getElementById('rpmInfo').innerText = 'RPM: -';
+            document.getElementById('calc15').innerText = '@1.5: -';
+            document.getElementById('calc16').innerText = '@1.6: -';
+            document.getElementById('customCalc').innerText = '-';
+            document.getElementById('brokerRpm').innerText = '-';
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const text = document.getElementById('editableOutput').value.trim();
+            if (!text) return;
+            const saved = JSON.parse(localStorage.getItem('savedLoads') || '[]');
+            saved.unshift(text);
+            localStorage.setItem('savedLoads', JSON.stringify(saved));
+            renderSavedLoads();
         });
 
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            const formatted = generateFormatted();
-            navigator.clipboard.writeText(formatted).then(() => { alert('Copied to clipboard!'); });
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            localStorage.removeItem('savedLoads');
+            renderSavedLoads();
         });
+
+        document.getElementById('formatBtn').addEventListener('click', updateOutput);
+        document.getElementById('clearBtn').addEventListener('click', clearAllFields);
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            let outputText = document.getElementById('editableOutput').value.trim();
+            if (!outputText) {
+                outputText = generateFormatted();
+            }
+            navigator.clipboard.writeText(outputText).then(() => { alert('Copied to clipboard!'); });
+        });
+
+        document.getElementById('input').addEventListener('input', updateOutput);
+        document.getElementById('includeDh').addEventListener('change', updateOutput);
+        document.getElementById('hiddenClear').addEventListener('click', clearAllFields);
+
+        renderSavedLoads();
     </script>
 </body>
-
 
 </html>
