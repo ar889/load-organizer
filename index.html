@@ -59,22 +59,23 @@
 
         textarea,
         .editable-output {
-            width: 100%;
+            width: 97%;
             height: 400px;
             padding: 10px;
             border-radius: 8px;
             border: 1px solid #cbd5e1;
-            background: #fff;
+            background: #f8f9fa;
             resize: vertical;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
             white-space: pre-wrap;
-            transition: box-shadow 0.3s ease;
+            transition: box-shadow 0.3s ease, background 0.3s ease;
         }
 
         textarea:focus,
         .editable-output:focus {
             outline: none;
             box-shadow: 0 0 8px #0ea5a4;
+            background: #f1f5f9;
         }
 
         .controls {
@@ -113,17 +114,18 @@
         }
 
         .card {
-            background: #fff;
+            background: #f8f9fa;
             border-radius: 10px;
             padding: 0;
             box-shadow: 0 2px 6px rgba(2, 6, 23, 0.08);
             height: 100%;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
         }
 
         .card:hover {
             transform: scale(1.02);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: #f1f5f9;
         }
 
         .info-input {
@@ -149,34 +151,43 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
         }
 
         .saved-card:nth-child(4n+1) {
-            background: #f1f8ff;
+            background: #eef6fb;
         }
 
         .saved-card:nth-child(4n+2) {
-            background: #f9fbe7;
+            background: #f5f8e7;
         }
 
         .saved-card:nth-child(4n+3) {
-            background: #f1f8e9;
+            background: #f3f8f1;
         }
 
         .saved-card:nth-child(4n+4) {
-            background: #fff3e0;
+            background: #fff4e6;
         }
 
         .saved-card:hover {
             transform: scale(1.02);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            background: #e8edf1;
         }
 
         .saved-actions {
             margin-top: 6px;
             display: flex;
             gap: 8px;
+        }
+
+        .success-temp {
+            background: #16a34a !important;
+        }
+
+        .danger-temp {
+            background: #dc2626 !important;
         }
     </style>
 </head>
@@ -218,11 +229,8 @@
         function parseChunk(chunk) {
             let rawLines = chunk.split(/\r?\n/).map(l => l.trim()).filter(l => l !== '');
 
-            // Detect RPM line ($X.XX*/mi)
             let rpmLine = rawLines.find(l => /^\$[\d,.]+.*\/mi/i.test(l));
             let rpm = rpmLine ? rpmLine.match(/\$([\d,.]+)/)[1] : '-';
-
-            // Remove RPM line if exists
             rawLines = rawLines.filter(l => !/^\$[\d,.]+.*\/mi/i.test(l));
 
             const out = { price: '', mile: '', dh: '', PU: '', Del: '', puDate: '', weight: '', lengthType: '', brokerName: '', brokerContact: '', rpm: rpm };
@@ -301,7 +309,18 @@
             document.getElementById('editableOutput').value = formatted;
         }
 
-        // Saved loads management
+        function tempFeedback(btn, message, type = 'success') {
+            const originalText = btn.textContent;
+
+            btn.textContent = message;
+            btn.classList.add(type === 'success' ? 'success-temp' : 'danger-temp');
+
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('success-temp', 'danger-temp');
+            }, 2000);
+        }
+
         function renderSavedLoads() {
             const saved = JSON.parse(localStorage.getItem('savedLoads') || '[]');
             const container = document.getElementById('savedLoads');
@@ -314,7 +333,10 @@
                 actions.className = 'saved-actions';
                 const copyBtn = document.createElement('button');
                 copyBtn.textContent = 'Copy';
-                copyBtn.onclick = () => navigator.clipboard.writeText(text);
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(text);
+                    tempFeedback(copyBtn, 'Copied!', 'success');
+                };
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.className = 'secondary';
@@ -340,28 +362,39 @@
             document.getElementById('brokerRpm').innerText = '-';
         }
 
-        document.getElementById('saveBtn').addEventListener('click', () => {
+        document.getElementById('saveBtn').addEventListener('click', (e) => {
             const text = document.getElementById('editableOutput').value.trim();
             if (!text) return;
             const saved = JSON.parse(localStorage.getItem('savedLoads') || '[]');
             saved.unshift(text);
             localStorage.setItem('savedLoads', JSON.stringify(saved));
             renderSavedLoads();
+            tempFeedback(e.target, 'Output Saved!', 'success');
         });
 
-        document.getElementById('clearAllBtn').addEventListener('click', () => {
+        document.getElementById('clearAllBtn').addEventListener('click', (e) => {
             localStorage.removeItem('savedLoads');
             renderSavedLoads();
+            tempFeedback(e.target, 'Cleared!', 'danger');
         });
 
-        document.getElementById('formatBtn').addEventListener('click', updateOutput);
-        document.getElementById('clearBtn').addEventListener('click', clearAllFields);
-        document.getElementById('copyBtn').addEventListener('click', () => {
+        document.getElementById('formatBtn').addEventListener('click', (e) => {
+            updateOutput();
+            tempFeedback(e.target, 'Formatted!', 'success');
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', (e) => {
+            clearAllFields();
+            tempFeedback(e.target, 'Cleared!', 'danger');
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', (e) => {
             let outputText = document.getElementById('editableOutput').value.trim();
             if (!outputText) {
                 outputText = generateFormatted();
             }
-            navigator.clipboard.writeText(outputText).then(() => { alert('Copied to clipboard!'); });
+            navigator.clipboard.writeText(outputText);
+            tempFeedback(e.target, 'Copied!', 'success');
         });
 
         document.getElementById('input').addEventListener('input', updateOutput);
