@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Load Organizer</title>
+    <link rel="icon" type="image/png" href="favicon.ico">
     <style>
         body {
             font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
@@ -226,7 +227,13 @@
 
             const out = { price: '', mile: '', dh: '', PU: '', Del: '', puDate: '', weight: '', lengthType: '', brokerName: '', brokerContact: '', rpm: rpm };
 
-            out.price = rawLines[0] || '-';
+            out.price = rawLines[0] || '';
+            if (out.price === '-' || out.price === '' || out.price === '–') {
+                out.price = '$';
+            } else {
+                out.price = '$' + out.price.replace(/[^0-9]/g, '');
+            }
+
             out.mile = rawLines[1] || '';
             out.PU = (rawLines[2] && rawLines[4]) ? rawLines[2] + ',' + rawLines[4] : '';
             out.Del = (rawLines[5] && rawLines[7]) ? rawLines[5] + ',' + rawLines[7] : '';
@@ -242,7 +249,7 @@
 
         function formatOutput(parsed) {
             const lines = [];
-            lines.push(parsed.price || '-');
+            lines.push(parsed.price || '$');
             if (parsed.mile) lines.push('Mile=' + parsed.mile);
             if (parsed.dh) lines.push('dh=' + parsed.dh);
             if (parsed.PU) lines.push('From=' + parsed.PU);
