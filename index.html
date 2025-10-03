@@ -17,7 +17,7 @@
 
         h1 {
             display: inline;
-            font-size: 22px;
+            font-size: 20px;
             margin-bottom: 8px;
             color: #0ea5a4;
             font-weight: 700;
@@ -154,6 +154,18 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
         }
 
+        .saved-card pre {
+            white-space: pre-wrap;
+            /* preserve newlines but allow wrapping */
+            word-wrap: break-word;
+            /* break long words if needed */
+            overflow-wrap: anywhere;
+            /* modern way to force break */
+            max-width: 100%;
+            /* prevent overflow */
+        }
+
+
         .saved-card:nth-child(4n+1) {
             background: #eef6fb;
         }
@@ -168,6 +180,24 @@
 
         .saved-card:nth-child(4n+4) {
             background: #fff4e6;
+        }
+
+        #exportBtn {
+            background: #0fcfce;
+            /* teal (matches theme) */
+        }
+
+        #exportBtn:hover {
+            background: #028090;
+        }
+
+        #importBtn {
+            background: #3b82f6;
+            /* blue accent */
+        }
+
+        #importBtn:hover {
+            background: #2563eb;
         }
 
         .saved-card:hover {
@@ -193,7 +223,10 @@
 </head>
 
 <body>
-    <h1><span id="hiddenClear">🚛 Powered by ARehman</span></h1>
+    <h1>
+        <span id="greeting" style="font-size:14px; color:#64748b; margin-right:8px;"></span>
+        <span id="hiddenClear">ARehman</span>
+    </h1>
     <div class="info-bar">
         <label><input type="checkbox" id="includeDh"> Include Deadhead</label>
         <span id="rpmInfo">RPM: -</span>
@@ -203,6 +236,12 @@
                 id="customCalc">-</span></span>
         <span>Broker $ <input id="brokerPrice" class="info-input" type="number" step="1" placeholder="1000"> → <span
                 id="brokerRpm">-</span></span>
+        <span>
+            Calc:
+            <input id="calcInput" class="info-input" type="text" placeholder="2+2">
+            = <span id="calcResult">-</span>
+        </span>
+
     </div>
 
     <div class="container">
@@ -225,7 +264,12 @@
             </div>
         </div>
     </div>
-
+    <!-- button for import & export  -->
+    <div class="controls">
+        <button id="exportBtn">Export Loads</button>
+        <input type="file" id="importFile" style="display:none" accept="application/json">
+        <button id="importBtn" class="secondary">Import Loads</button>
+    </div>
     <div id="savedLoads"></div>
 
     <script>
@@ -411,6 +455,104 @@
         document.getElementById('hiddenClear').addEventListener('click', clearAllFields);
 
         renderSavedLoads();
+
+        // Export saved loads as JSON file
+        function exportLoads() {
+            const saved = JSON.parse(localStorage.getItem('savedLoads') || '[]');
+            if (!saved.length) {
+                alert("No saved loads to export.");
+                return;
+            }
+            const blob = new Blob([JSON.stringify(saved, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "savedLoads.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import loads from JSON file (merge, not overwrite)
+        function importLoads(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error("Invalid file format");
+
+                    const existing = JSON.parse(localStorage.getItem('savedLoads') || '[]');
+                    const merged = [...imported, ...existing]; // imported first, then old
+                    localStorage.setItem('savedLoads', JSON.stringify(merged));
+                    renderSavedLoads();
+                    alert("Loads imported successfully!");
+                } catch (err) {
+                    alert("Error importing loads: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Hook buttons
+        document.getElementById("exportBtn").addEventListener("click", exportLoads);
+        document.getElementById("importBtn").addEventListener("click", () => {
+            document.getElementById("importFile").click();
+        });
+        document.getElementById("importFile").addEventListener("change", (e) => {
+            if (e.target.files.length) {
+                importLoads(e.target.files[0]);
+            }
+        });
+
+        // Greeting based on current time
+        function setGreeting() {
+            const hour = new Date().getHours();
+            let greeting = "Hello";
+
+            if (hour >= 6 && hour < 11) {
+                greeting = "Good Morning";
+            } else if (hour >= 11 && hour < 17) {
+                greeting = "Good Afternoon";
+            } else if (hour >= 17 && hour < 21) {
+                greeting = "Good Evening";
+            } else {
+                greeting = "Good Night";
+            }
+
+            document.getElementById("greeting").textContent = greeting + ",";
+        }
+
+        // Run immediately and update every minute
+        setGreeting();
+        setInterval(setGreeting, 60000);
+
+
+        // Live calculator input
+        const calcInput = document.getElementById("calcInput");
+        const calcResult = document.getElementById("calcResult");
+
+        calcInput.addEventListener("input", (e) => {
+            let expr = e.target.value.trim();
+            if (!expr) {
+                calcResult.textContent = "-";
+                return;
+            }
+            try {
+                // Replace "x" or "X" with "*"
+                expr = expr.replace(/x/gi, "*");
+
+                // Only allow numbers and safe operators
+                if (/^[0-9+\-*/(). ]+$/.test(expr)) {
+                    // Safely evaluate
+                    let result = eval(expr);
+                    calcResult.textContent = isFinite(result) ? result : "Err";
+                } else {
+                    calcResult.textContent = "Err";
+                }
+            } catch {
+                calcResult.textContent = "Err";
+            }
+        });
+
     </script>
 </body>
 
